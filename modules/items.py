@@ -1,18 +1,26 @@
 #!/usr/bin/python2.4
 
+from modules import utils
+
 class Item(object):
   TABLE_NAME = 'Item'
 
   def __init__(self, db, id):
+    try:
+      if id == self.__id:
+        return
+    except AttributeError, e:
+      pass
+
     self.__id = id
     (description, keywords, summary, title) = db.FieldsForItem(
         id, Item.TABLE_NAME, 'description', 'keywords', 'summary', 'title')
 
-    # TODO(caffeine): these need HTML-unescaping
-    self.__description = description
-    self.__keywords = keywords
-    self.__summary = summary
-    self.__title = title
+    self.__description = utils.HtmlUnescape(
+        (description, '')[description is None])
+    self.__keywords = utils.HtmlUnescape((keywords, '')[keywords is None])
+    self.__summary = utils.HtmlUnescape((summary, '')[summary is None])
+    self.__title = utils.HtmlUnescape((title, '')[title is None])
 
   def __str__(self):
     return "%s: title='%s' summary='%s' description='%s' keywords='%s'" % (
@@ -20,7 +28,7 @@ class Item(object):
       self.__description, self.__keywords)
 
   def type(self):
-    return 'Item'
+    pass
 
   def id(self):
     return self.__id
@@ -38,26 +46,37 @@ class Item(object):
     return self.__title
 
 
-class ChildItem(Item):
+class ChildEntity(Item):
   TABLE_NAME = 'ChildEntity'
 
   def __init__(self, db, id):
     Item.__init__(self, db, id)
-    (parent_id,) = db.FieldsForItem(id, ChildItem.TABLE_NAME, 'parentId')
+    (parent_id,) = db.FieldsForItem(id, ChildEntity.TABLE_NAME, 'parentId')
     self.__parent_id = parent_id
-
-  def type(self):
-    return 'ChildItem'
 
   def parent_id(self):
     return self.__parent_id
 
 
-class PhotoItem(ChildItem):
+class FileSystemEntity(Item):
+  TABLE_NAME = 'FileSystemEntity'
+
+  def __init__(self, db, id):
+    Item.__init__(self, db, id)
+    (path_component,) = db.FieldsForItem(
+        id, FileSystemEntity.TABLE_NAME, 'pathComponent')
+    self.__path_component = path_component
+
+  def path_component(self):
+    return self.__path_component
+
+
+class PhotoItem(ChildEntity, FileSystemEntity):
   TABLE_NAME = 'PhotoItem'
 
   def __init__(self, db, id):
-    ChildItem.__init__(self, db, id)
+    ChildEntity.__init__(self, db, id)
+    FileSystemEntity.__init__(self, db, id)
     self.__id = id
     (width, height) = db.FieldsForItem(
         id, PhotoItem.TABLE_NAME, 'width', 'height')
