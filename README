@@ -1,0 +1,7 @@
+gallery2picasaweb
+
+Dependencies:
+
+Python 2.4.x: www.python.org
+mysql-python: mysql-python.sourceforge.net
+
