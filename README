@@ -3,9 +3,11 @@ gallery2picasaweb
 Dependencies:
 
 Python 2.4.x: www.python.org
-python-gdata: code.google.com/p/gdata-python-client
+
 mysql-python: mysql-python.sourceforge.net
+python-gdata: code.google.com/p/gdata-python-client
+picasapush:   code.google.com/p/picasapush
 
 Usage:
 
-Run gallery2picasaweb with no arguments to see a usage message.
+Run gallery2picasaweb.py with no arguments to see a usage message.
