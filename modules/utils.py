@@ -8,3 +8,10 @@ def HtmlUnescape(s):
   p.save_bgn()
   p.feed(s)
   return p.save_end()
+
+def Usage(appname, flagusage, flagmessage=None):
+  if flagmessage is not None:
+    print '%s\n' % flagmessage
+
+  print 'Usage:\t%s' % appname
+  print flagusage
