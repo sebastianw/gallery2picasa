@@ -1,61 +1,38 @@
 #!/usr/bin/python2.4
 
+from modules import flags
 from modules import items
 from modules import db
 
 import getopt
 import sys
 
-def usage(appname):
-  print '%s -u|--username <username> -p|--password <password>' % appname
-  print 'Where:'
-  print "\t<username> is the MySQL user to connect as"
-  print "\t<password> is the MySQL password to use"
+FLAGS = flags.FLAGS
+FLAGS.AddFlag('u', 'username', 'The username to use for the database')
+FLAGS.AddFlag('p', 'password', 'The password to use for the database')
+FLAGS.AddFlag('d', 'database', 'The database to use', 'gallery2')
+FLAGS.AddFlag('h', 'hostname', 'The hostname to use', 'localhost')
+FLAGS.AddFlag('t', 'table_prefix', 'The table prefix to use', 'g2_')
+FLAGS.AddFlag('f', 'field_prefix', 'The field prefix to use', 'g_')
 
-  print '\nOptional arguments:'
-  print "\t[-d|--database <database> (default: 'gallery2')]"
-  print "\t[-h|--hostname <hostname> (default: 'localhost')]"
-  print "\t[-t|--table_prefix <table_prefix> (default: 'g2_')]"
-  print "\t[-f|--field_preifx <field_prefix> (default: 'g_')]"
+def usage(appname, flagusage, flagmessage):
+  if flagmessage is not None:
+    print '%s\n' % flagmessage
+
+  print 'Usage:\t%s' % appname
+  print flagusage
 
 def main(argv):
   appname = argv[0]
 
   try:
-    opts, argv = getopt.getopt(argv[1:], 'u:p:d:h:t:f:', [
-        'username=', 'password=', 'database=', 'hostname=',
-        'table_prefix=', 'field_prefix=' ])
-  except getopt.GetoptError:
-    usage(appname)
+    argv = FLAGS.Parse(argv[1:])
+  except flags.FlagParseError, e:
+    usage(appname, e.usage(), e.message())
     sys.exit(1)
 
-  username = None
-  password = None
-  database = 'gallery2'
-  hostname = 'localhost'
-  table_prefix = 'g2_'
-  field_prefix = 'g_'
-
-  for o, a in opts:
-    if o in ('-u', '--username'):
-      username = a
-    if o in ('-p', '--password'):
-      password = a
-    if o in ('-d', '--database'):
-      database = a
-    if o in ('-h', '--hostname'):
-      hostname = a
-    if o in ('-t', '--table_prefix'):
-      table_prefix = a
-    if o in ('-f', '--field_prefix'):
-      field_prefix = a
-
-  if username is None or password is None:
-    usage(appname)
-    sys.exit(1)
-
-  gdb = db.Database(username, password, database, hostname,
-      table_prefix, field_prefix)
+  gdb = db.Database(FLAGS.username, FLAGS.password, FLAGS.database,
+      FLAGS.hostname, FLAGS.table_prefix, FLAGS.field_prefix)
 
   try:
     albums = []
