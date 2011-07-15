@@ -93,11 +93,12 @@ class PhotoItem(ChildEntity, FileSystemEntity):
     return self.__height
 
 
-class AlbumItem(ChildEntity):
+class AlbumItem(ChildEntity, FileSystemEntity):
   TABLE_NAME = 'AlbumItem'
 
   def __init__(self, db, id):
     ChildEntity.__init__(self, db, id)
+    FileSystemEntity.__init__(self, db, id)
     (theme,) = db.FieldsForItem(
         id, AlbumItem.TABLE_NAME, 'theme')
     self.__theme = theme
