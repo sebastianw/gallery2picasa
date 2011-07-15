@@ -86,14 +86,15 @@ def main(argv):
       a = pws.InsertAlbum(album.title(), album.summary(), access=privacy)
 
       for photo in photos_by_album[album.id()]:
-        strout = '\tCREATING PHOTO [%s] [%s] [%s]' % (
-            photo.path_component(), photo.summary(), photo.keywords())
+        title = photo.title() or photo.path_component()
+        strout = '\tCREATING PHOTO [F:%s] [T:%s] [S:%s] [K:%s]' % (
+            photo.path_component(), title, photo.summary(), photo.keywords())
         print strout.encode(sys.stdout.encoding, 'replace')
 
         keywords = ', '.join(photo.keywords().split())
         filename = '%s/albums/%s/%s' % (
             FLAGS.gallery_prefix, album.full_album_path(gdb), photo.path_component())
-        pws.InsertPhotoSimple(a.GetFeedLink().href, photo.path_component(),
+        pws.InsertPhotoSimple(a.GetFeedLink().href, title,
             photo.summary(), filename, keywords=keywords)
             
   finally:
