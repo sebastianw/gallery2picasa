@@ -20,6 +20,7 @@ FLAGS.AddFlag('f', 'field_prefix', 'The field prefix to use', 'g_')
 FLAGS.AddFlag('u', 'username', 'The Google username to use')
 FLAGS.AddFlag('p', 'password', 'The Google password to use')
 FLAGS.AddFlag('y', 'privacy', 'The access level for the album ("private" or "public")', 'public')
+FLAGS.AddFlag('o', 'confirm', 'Confirm upload for every album', 'true')
 FLAGS.AddFlag('g', 'gallery_prefix', 'Prefix for gallery photos',
     '/var/local/g2data')
 
@@ -37,6 +38,12 @@ def main(argv):
 
   pws = gdata.photos.service.PhotosService()
   pws.ClientLogin(FLAGS.username, FLAGS.password)
+
+  confirm = FLAGS.confirm
+  if confirm == 'true':
+      confirm = True
+  else:
+      confirm = False
 
   try:
     albums = []
@@ -56,6 +63,22 @@ def main(argv):
     for album in albums:
       if album.id() not in photos_by_album:
         continue
+
+      if confirm:
+        upload_album = False
+        confirmed = False
+        while confirmed == False:
+          confirm_input = raw_input('Upload Album "%s"? [y/N]' % album.title()).lower()
+          if confirm_input == 'n' or confirm_input == '':
+            confirmed = True
+          elif confirm_input == 'y':
+            upload_album = True
+            confirmed = True
+          else:
+            print 'Input was %s' % confirm_input
+
+        if upload_album != True:
+          continue
 
       privacy = FLAGS.privacy.lower()
       if privacy != 'public':
