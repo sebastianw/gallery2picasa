@@ -68,7 +68,7 @@ def main(argv):
         upload_album = False
         confirmed = False
         while confirmed == False:
-          confirm_input = raw_input('Upload Album "%s"? [y/N]' % album.title().encode('ascii', 'replace')).lower()
+          confirm_input = raw_input('Upload Album "%s"? [y/N]' % album.title().encode(sys.stdout.encoding, 'replace')).lower()
           if confirm_input == 'n' or confirm_input == '':
             confirmed = True
           elif confirm_input == 'y':
@@ -81,12 +81,14 @@ def main(argv):
       privacy = FLAGS.privacy.lower()
       if privacy != 'public':
         privacy = 'private'
-      print 'CREATING ALBUM [%s] [%s]' % (album.title(), album.summary())
+      strout = 'CREATING ALBUM [%s] [%s]' % (album.title(), album.summary())
+      print strout.encode(sys.stdout.encoding, 'replace')
       a = pws.InsertAlbum(album.title(), album.summary(), access=privacy)
 
       for photo in photos_by_album[album.id()]:
-        print '\tCREATING PHOTO [%s] [%s] [%s]' % (
+        strout = '\tCREATING PHOTO [%s] [%s] [%s]' % (
             photo.path_component(), photo.summary(), photo.keywords())
+        print strout.encode(sys.stdout.encoding, 'replace')
 
         keywords = ', '.join(photo.keywords().split())
         filename = '%s/albums/%s/%s' % (

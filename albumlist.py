@@ -18,7 +18,7 @@ FLAGS.AddFlag('f', 'field_prefix', 'The field prefix to use', 'g_')
 
 def printAlbum(album, subalbums, photos, level=0):
 
-    print level*'\t' + '%s' %  album
+    print level*'\t' + '%s' %  unicode(album).encode(sys.stdout.encoding, 'replace')
 
     try:
       for sub in subalbums[album.id()]:
@@ -28,7 +28,7 @@ def printAlbum(album, subalbums, photos, level=0):
 
     try:
       for photo in photos[album.id()]:
-        print level*'\t' + '\t%s' % photo
+        print level*'\t' + '\t%s' % unicode(photo).encode(sys.stdout.encoding, 'replace')
     except KeyError:
       pass
 
