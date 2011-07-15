@@ -27,10 +27,11 @@ class Database(object):
     if not Database.validate_name(field_prefix):
         raise BadNameError('Field prefix %s is invalid' % field_prefix)
     
-    self.__db = MySQLdb.connect(hostname, username, password, database)
+    self.__db = MySQLdb.connect(hostname, username, password, database,
+            use_unicode=True, charset='utf8')
     self.__table_prefix = table_prefix
     self.__field_prefix = field_prefix
-    self.__id_field = field_prefix + 'id';
+    self.__id_field = field_prefix + 'id'
 
   def table_prefix(self):
     return self.__table_prefix
