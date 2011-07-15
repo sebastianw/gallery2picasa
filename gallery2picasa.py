@@ -81,21 +81,24 @@ def main(argv):
       privacy = FLAGS.privacy.lower()
       if privacy != 'public':
         privacy = 'private'
-      strout = 'CREATING ALBUM [%s] [%s]' % (album.title(), album.summary())
+      summary = album.summary() or album.description()
+      strout = 'CREATING ALBUM [%s] [%s]' % (album.title(), summary)
       print strout.encode(sys.stdout.encoding, 'replace')
-      a = pws.InsertAlbum(album.title(), album.summary(), access=privacy)
+      a = pws.InsertAlbum(album.title(), summary, access=privacy)
 
       for photo in photos_by_album[album.id()]:
+        # Title is displayed nowhere in picasa?
         title = photo.title() or photo.path_component()
+        summary = photo.summary() or photo.description() or photo.title()
         strout = '\tCREATING PHOTO [F:%s] [T:%s] [S:%s] [K:%s]' % (
-            photo.path_component(), title, photo.summary(), photo.keywords())
+            photo.path_component(), title, summary, photo.keywords())
         print strout.encode(sys.stdout.encoding, 'replace')
 
         keywords = ', '.join(photo.keywords().split())
         filename = '%s/albums/%s/%s' % (
             FLAGS.gallery_prefix, album.full_album_path(gdb), photo.path_component())
         pws.InsertPhotoSimple(a.GetFeedLink().href, title,
-            photo.summary(), filename, keywords=keywords)
+            summary, filename, keywords=keywords)
             
   finally:
     gdb.close()
