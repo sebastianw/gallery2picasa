@@ -1,5 +1,3 @@
-#!/usr/bin/python2.4
-
 import MySQLdb
 import logging
 import re

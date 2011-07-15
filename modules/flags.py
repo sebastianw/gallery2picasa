@@ -1,5 +1,3 @@
-#!/usr/bin/python2.4
-
 import getopt
 
 class FlagDefinitionError(Exception):

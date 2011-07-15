@@ -1,5 +1,3 @@
-#!/usr/bin/python2.4
-
 from modules import utils
 
 class Item(object):
