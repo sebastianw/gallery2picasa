@@ -1,4 +1,5 @@
 from modules import utils
+import os
 
 class Item(object):
   TABLE_NAME = 'Item'
@@ -108,3 +109,10 @@ class AlbumItem(ChildEntity, FileSystemEntity):
 
   def theme(self):
     return self.__theme
+
+  def full_album_path(self, db):
+    if self.parent_id():
+      parent = AlbumItem(db, self.parent_id())
+      return os.path.join((parent.full_album_path(db) or ''), self.path_component())
+    else:
+      return self.path_component()

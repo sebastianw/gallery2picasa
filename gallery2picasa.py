@@ -92,7 +92,7 @@ def main(argv):
 
         keywords = ', '.join(photo.keywords().split())
         filename = '%s/albums/%s/%s' % (
-            FLAGS.gallery_prefix, album.title(), photo.path_component())
+            FLAGS.gallery_prefix, album.full_album_path(gdb), photo.path_component())
         pws.InsertPhotoSimple(a.GetFeedLink().href, photo.path_component(),
             photo.summary(), filename, 'image/jpeg', keywords)
             
