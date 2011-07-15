@@ -68,14 +68,12 @@ def main(argv):
         upload_album = False
         confirmed = False
         while confirmed == False:
-          confirm_input = raw_input('Upload Album "%s"? [y/N]' % album.title()).lower()
+          confirm_input = raw_input('Upload Album "%s"? [y/N]' % album.title().encode('ascii', 'replace')).lower()
           if confirm_input == 'n' or confirm_input == '':
             confirmed = True
           elif confirm_input == 'y':
             upload_album = True
             confirmed = True
-          else:
-            print 'Input was %s' % confirm_input
 
         if upload_album != True:
           continue
