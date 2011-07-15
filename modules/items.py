@@ -50,7 +50,9 @@ class ChildEntity(Item):
   def __init__(self, db, id):
     Item.__init__(self, db, id)
     (parent_id,) = db.FieldsForItem(id, ChildEntity.TABLE_NAME, 'parentId')
-    self.__parent_id = parent_id
+    self.__parent_id = None
+    if parent_id > 0:
+      self.__parent_id = parent_id
 
   def parent_id(self):
     return self.__parent_id
@@ -91,11 +93,11 @@ class PhotoItem(ChildEntity, FileSystemEntity):
     return self.__height
 
 
-class AlbumItem(Item):
+class AlbumItem(ChildEntity):
   TABLE_NAME = 'AlbumItem'
 
   def __init__(self, db, id):
-    Item.__init__(self, db, id)
+    ChildEntity.__init__(self, db, id)
     (theme,) = db.FieldsForItem(
         id, AlbumItem.TABLE_NAME, 'theme')
     self.__theme = theme
