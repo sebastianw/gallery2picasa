@@ -19,6 +19,7 @@ FLAGS.AddFlag('t', 'table_prefix', 'The table prefix to use', 'g2_')
 FLAGS.AddFlag('f', 'field_prefix', 'The field prefix to use', 'g_')
 FLAGS.AddFlag('u', 'username', 'The Google username to use')
 FLAGS.AddFlag('p', 'password', 'The Google password to use')
+FLAGS.AddFlag('y', 'privacy', 'The access level for the album ("private" or "public")', 'public')
 FLAGS.AddFlag('g', 'gallery_prefix', 'Prefix for gallery photos',
     '/var/local/g2data')
 
@@ -56,8 +57,11 @@ def main(argv):
       if album.id() not in photos_by_album:
         continue
 
+      privacy = FLAGS.privacy.lower()
+      if privacy != 'public':
+        privacy = 'private'
       print 'CREATING ALBUM [%s] [%s]' % (album.title(), album.summary())
-      a = pws.InsertAlbum(album.title(), album.summary())
+      a = pws.InsertAlbum(album.title(), album.summary(), access=privacy)
 
       for photo in photos_by_album[album.id()]:
         print '\tCREATING PHOTO [%s] [%s] [%s]' % (
