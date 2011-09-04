@@ -1,8 +1,12 @@
 gallery2picasaweb
 
+The original script ist at http://code.google.com/p/gallery2picasa/
+I updated it to fix errors and support G2 Subalbums.
+This updated/hacked version is hosted at github: https://github.com/sebastianw/gallery2picasa
+
 Dependencies:
 
-Python 2.4.x: www.python.org
+Python: www.python.org
 
 mysql-python: mysql-python.sourceforge.net
 python-gdata: code.google.com/p/gdata-python-client
