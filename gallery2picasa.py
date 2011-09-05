@@ -102,6 +102,8 @@ def main(argv):
           success = True
           break
         except gdata.photos.service.GooglePhotosException, e:
+          if e[0] < 500:
+            raise e
           strout = 'Google error: gdata.photos.service.GooglePhotosException %s' % e
           print strout.encode(sys.stdout.encoding, 'replace')
         mtries -=1
@@ -136,6 +138,8 @@ def main(argv):
             success = True
             break
           except gdata.photos.service.GooglePhotosException, e:
+            if e[0] < 500:
+              raise e
             strout = 'Google error: gdata.photos.service.GooglePhotosException %s' % e
             print strout.encode(sys.stdout.encoding, 'replace')
           mtries -=1
