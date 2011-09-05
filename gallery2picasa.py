@@ -25,6 +25,38 @@ FLAGS.AddFlag('o', 'confirm', 'Confirm upload for every album', 'true')
 FLAGS.AddFlag('g', 'gallery_prefix', 'Prefix for gallery photos',
     '/var/local/g2data')
 
+# Error avoidance
+retry = 10            # Number of retries
+delay = 0.2           # Delay in (sub-)seconds
+backoff = 2           # Double delay on every retry
+max_per_album = 1000  # Maximum items per album
+
+def create_google_album(pws, album, privacy, seq=0):
+  summary = album.summary() or album.description()
+  atitle = album.title()
+  if seq > 0:
+    atitle = "%s_%s" % (atitle, seq)
+  mtries, mdelay = retry, delay
+  while mtries > 0:
+    if mtries != retry:
+      strout = 'Retrying album creation.'
+      print strout.encode(sys.stdout.encoding, 'replace')
+    try:
+      strout = 'CREATING ALBUM [%s] [%s]' % (atitle, summary)
+      print strout.encode(sys.stdout.encoding, 'replace')
+      return pws.InsertAlbum(atitle, summary, access=privacy)
+    except gdata.photos.service.GooglePhotosException, e:
+      if e[0] < 500:
+        raise e
+      strout = 'Google error: gdata.photos.service.GooglePhotosException %s' % e
+      print strout.encode(sys.stdout.encoding, 'replace')
+    mtries -=1
+    strout = 'Sleeping %.2f seconds.' % mdelay
+    print strout.encode(sys.stdout.encoding, 'replace')
+    time.sleep(mdelay)
+    mdelay *= backoff
+  raise Exception('Could not create album')
+
 def main(argv):
   appname = argv[0]
 
@@ -33,11 +65,6 @@ def main(argv):
   except flags.FlagParseError, e:
     utils.Usage(appname, e.usage(), e.message())
     sys.exit(1)
-
-  # Error avoidance
-  retry = 10   # Number of retries
-  delay = 0.2 # Delay in (sub-)seconds
-  backoff = 2  # Double delay on every retry
 
   gdb = db.Database(FLAGS.dbuser, FLAGS.dbpass, FLAGS.database,
       FLAGS.hostname, FLAGS.table_prefix, FLAGS.field_prefix)
@@ -87,34 +114,18 @@ def main(argv):
       privacy = FLAGS.privacy.lower()
       if privacy != 'public':
         privacy = 'private'
-      summary = album.summary() or album.description()
 
-      mtries, mdelay = retry, delay
-      success = False
-      while mtries > 0:
-        if mtries != retry:
-          strout = 'Retrying album creation.'
-          print strout.encode(sys.stdout.encoding, 'replace')
-        try:
-          strout = 'CREATING ALBUM [%s] [%s]' % (album.title(), summary)
-          print strout.encode(sys.stdout.encoding, 'replace')
-          a = pws.InsertAlbum(album.title(), summary, access=privacy)
-          success = True
-          break
-        except gdata.photos.service.GooglePhotosException, e:
-          if e[0] < 500:
-            raise e
-          strout = 'Google error: gdata.photos.service.GooglePhotosException %s' % e
-          print strout.encode(sys.stdout.encoding, 'replace')
-        mtries -=1
-        strout = 'Sleeping %.2f seconds.' % mdelay
-        print strout.encode(sys.stdout.encoding, 'replace')
-        time.sleep(mdelay)
-        mdelay *= backoff
-      if not success:
-        raise Exception('Could not create album')
+      galbum = create_google_album(pws, album, privacy)
 
+      pcount = 0
+      acount = 0
       for photo in photos_by_album[album.id()]:
+        pcount += 1
+        if pcount > max_per_album:
+          pcount = 1
+          acount += 1
+          galbum = create_google_album(pws, album, privacy, acount)
+
         # Title is displayed nowhere in picasa?
         title = photo.title() or photo.path_component()
         summary = photo.summary() or photo.description() or photo.title()
@@ -133,7 +144,7 @@ def main(argv):
             strout = '\tCREATING PHOTO [F:%s] [T:%s] [S:%s] [K:%s]' % (
                 photo.path_component(), title, summary, photo.keywords())
             print strout.encode(sys.stdout.encoding, 'replace')
-            pws.InsertPhotoSimple(a.GetFeedLink().href, title,
+            pws.InsertPhotoSimple(galbum.GetFeedLink().href, title,
                 summary, filename, keywords=keywords)
             success = True
             break
