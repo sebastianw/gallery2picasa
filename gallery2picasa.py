@@ -98,7 +98,7 @@ def main(argv):
         try:
           strout = 'CREATING ALBUM [%s] [%s]' % (album.title(), summary)
           print strout.encode(sys.stdout.encoding, 'replace')
-          pws.InsertAlbum(album.title(), summary, access=privacy)
+          a = pws.InsertAlbum(album.title(), summary, access=privacy)
           success = True
           break
         except gdata.photos.service.GooglePhotosException, e:
