@@ -10,6 +10,7 @@ import gdata.photos.service
 import getopt
 import sys
 import time
+import mimetypes
 
 FLAGS = flags.FLAGS
 FLAGS.AddFlag('b', 'dbuser', 'The username to use for the database')
@@ -30,6 +31,30 @@ retry = 10            # Number of retries
 delay = 0.2           # Delay in (sub-)seconds
 backoff = 2           # Double delay on every retry
 max_per_album = 1000  # Maximum items per album
+
+# Grabbed from http://code.google.com/intl/de-DE/apis/picasaweb/docs/2.0/developers_guide_protocol.html
+valid_mimetypes = [
+'image/bmp',
+'image/gif',
+'image/jpeg',
+'image/png',
+'video/3gpp',
+'video/avi',
+'video/quicktime',
+'video/mp4',
+'video/mpeg',
+'video/mpeg4',
+'video/msvideo',
+'video/x-ms-asf',
+'video/x-ms-wmv',
+'video/x-msvideo'
+]
+
+# Hack because python gdata client does not accept videos?!
+for mtype in valid_mimetypes:
+  mayor, minor = mtype.split('/')
+  if mayor == 'video':
+    gdata.photos.service.SUPPORTED_UPLOAD_TYPES += (minor,)
 
 def create_google_album(pws, album, privacy, seq=0):
   summary = album.summary() or album.description()
@@ -93,6 +118,14 @@ def main(argv):
 
       photos_by_album[photo.parent_id()].append(photo)
 
+    movie_ids = gdb.ItemIdsForTable(items.MovieItem.TABLE_NAME)
+    for id in movie_ids:
+      movie = items.MovieItem(gdb, id)
+      if movie.parent_id() not in photos_by_album:
+        photos_by_album[movie.parent_id()] = []
+
+      photos_by_album[movie.parent_id()].append(movie)
+
     for album in albums:
       if album.id() not in photos_by_album:
         continue
@@ -120,6 +153,14 @@ def main(argv):
       pcount = 0
       acount = 0
       for photo in photos_by_album[album.id()]:
+        filename = '%s/albums/%s/%s' % (
+            FLAGS.gallery_prefix, album.full_album_path(gdb), photo.path_component())
+        (filetype, fileenc) = mimetypes.guess_type(filename)
+        if filetype not in valid_mimetypes:
+            strout = '%s has no valid MIME-Type!' % photo.path_component()
+            print strout.encode(sys.stdout.encoding, 'replace')
+            continue
+
         pcount += 1
         if pcount > max_per_album:
           pcount = 1
@@ -131,28 +172,27 @@ def main(argv):
         summary = photo.summary() or photo.description() or photo.title()
 
         keywords = ', '.join(photo.keywords().split())
-        filename = '%s/albums/%s/%s' % (
-            FLAGS.gallery_prefix, album.full_album_path(gdb), photo.path_component())
 
         mtries, mdelay = retry, delay
         success = False
         while mtries > 0:
           if mtries != retry:
-            strout = 'Retrying photo upload.'
+            strout = 'Retrying media upload.'
             print strout.encode(sys.stdout.encoding, 'replace')
           try:
-            strout = '\tCREATING PHOTO [F:%s] [T:%s] [S:%s] [K:%s]' % (
+            strout = '\tCREATING Item [F:%s] [T:%s] [S:%s] [K:%s]' % (
                 photo.path_component(), title, summary, photo.keywords())
             print strout.encode(sys.stdout.encoding, 'replace')
             pws.InsertPhotoSimple(galbum.GetFeedLink().href, title,
-                summary, filename, keywords=keywords)
+                summary, filename, keywords=keywords, content_type=filetype)
             success = True
             break
           except gdata.photos.service.GooglePhotosException, e:
-            if e[0] < 500:
+            if e[0] in [500, 503]:
+              strout = 'Google error: gdata.photos.service.GooglePhotosException %s' % e
+              print strout.encode(sys.stdout.encoding, 'replace')
+            else:
               raise e
-            strout = 'Google error: gdata.photos.service.GooglePhotosException %s' % e
-            print strout.encode(sys.stdout.encoding, 'replace')
           mtries -=1
           strout = 'Sleeping %.2f seconds.' % mdelay
           print strout.encode(sys.stdout.encoding, 'replace')
