@@ -93,6 +93,30 @@ class PhotoItem(ChildEntity, FileSystemEntity):
   def height(self):
     return self.__height
 
+class MovieItem(ChildEntity, FileSystemEntity):
+  TABLE_NAME = 'MovieItem'
+
+  def __init__(self, db, id):
+    ChildEntity.__init__(self, db, id)
+    FileSystemEntity.__init__(self, db, id)
+    self.__id = id
+    (width, height, duration) = db.FieldsForItem(
+        id, MovieItem.TABLE_NAME, 'width', 'height', 'duration')
+    self.__width = width
+    self.__height = height
+    self.__duration = duration
+
+  def type(self):
+    return 'Movie'
+
+  def width(self):
+    return self.__width
+
+  def height(self):
+    return self.__height
+
+  def duration(self):
+    return self.__duration
 
 class AlbumItem(ChildEntity, FileSystemEntity):
   TABLE_NAME = 'AlbumItem'
