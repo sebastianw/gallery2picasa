@@ -191,6 +191,13 @@ def main(argv):
             if e[0] in [500, 503]:
               strout = 'Google error: gdata.photos.service.GooglePhotosException %s' % e
               print strout.encode(sys.stdout.encoding, 'replace')
+            # Error 413: Entity too large
+            elif e[0] in [413]:
+              strout = 'Google error: Entity too large!'
+              print strout.encode(sys.stdout.encoding, 'replace')
+              # Continue with next photo
+              success = 1
+              break
             else:
               raise e
           mtries -=1
