@@ -16,9 +16,15 @@ FLAGS.AddFlag('h', 'hostname', 'The hostname to use', 'localhost')
 FLAGS.AddFlag('t', 'table_prefix', 'The table prefix to use', 'g2_')
 FLAGS.AddFlag('f', 'field_prefix', 'The field prefix to use', 'g_')
 
+if sys.stdout.isatty():
+    default_encoding = sys.stdout.encoding
+else:
+    import locale
+    default_encoding = locale.getpreferredencoding()
+
 def printAlbum(album, subalbums, photos, level=0):
 
-    print level*'\t' + '%s' %  unicode(album).encode(sys.stdout.encoding, 'replace')
+    print level*'\t' + '%s' %  unicode(album).encode(default_encoding, 'replace')
 
     try:
       for sub in subalbums[album.id()]:
@@ -28,7 +34,7 @@ def printAlbum(album, subalbums, photos, level=0):
 
     try:
       for photo in photos[album.id()]:
-        print level*'\t' + '\t%s' % unicode(photo).encode(sys.stdout.encoding, 'replace')
+        print level*'\t' + '\t%s' % unicode(photo).encode(default_encoding, 'replace')
     except KeyError:
       pass
 

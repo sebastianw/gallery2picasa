@@ -50,6 +50,12 @@ valid_mimetypes = [
 'video/x-msvideo'
 ]
 
+if sys.stdout.isatty():
+    default_encoding = sys.stdout.encoding
+else:
+    import locale
+    default_encoding = locale.getpreferredencoding()
+
 # Hack because python gdata client does not accept videos?!
 for mtype in valid_mimetypes:
   mayor, minor = mtype.split('/')
@@ -65,19 +71,19 @@ def create_google_album(pws, album, privacy, seq=0):
   while mtries > 0:
     if mtries != retry:
       strout = 'Retrying album creation.'
-      print strout.encode(sys.stdout.encoding, 'replace')
+      print strout.encode(default_encoding, 'replace')
     try:
       strout = 'CREATING ALBUM [%s] [%s]' % (atitle, summary)
-      print strout.encode(sys.stdout.encoding, 'replace')
+      print strout.encode(default_encoding, 'replace')
       return pws.InsertAlbum(atitle, summary, access=privacy)
     except gdata.photos.service.GooglePhotosException, e:
       if e[0] < 500:
         raise e
       strout = 'Google error: gdata.photos.service.GooglePhotosException %s' % e
-      print strout.encode(sys.stdout.encoding, 'replace')
+      print strout.encode(default_encoding, 'replace')
     mtries -=1
     strout = 'Sleeping %.2f seconds.' % mdelay
-    print strout.encode(sys.stdout.encoding, 'replace')
+    print strout.encode(default_encoding, 'replace')
     time.sleep(mdelay)
     mdelay *= backoff
   raise Exception('Could not create album')
@@ -134,7 +140,7 @@ def main(argv):
         upload_album = False
         confirmed = False
         while confirmed == False:
-          confirm_input = raw_input('Upload Album "%s"? [y/N]' % album.title().encode(sys.stdout.encoding, 'replace')).lower()
+          confirm_input = raw_input('Upload Album "%s"? [y/N]' % album.title().encode(default_encoding, 'replace')).lower()
           if confirm_input == 'n' or confirm_input == '':
             confirmed = True
           elif confirm_input == 'y':
@@ -158,7 +164,7 @@ def main(argv):
         (filetype, fileenc) = mimetypes.guess_type(filename)
         if filetype not in valid_mimetypes:
             strout = '%s has no valid MIME-Type!' % photo.path_component()
-            print strout.encode(sys.stdout.encoding, 'replace')
+            print strout.encode(default_encoding, 'replace')
             continue
 
         pcount += 1
@@ -178,11 +184,11 @@ def main(argv):
         while mtries > 0:
           if mtries != retry:
             strout = 'Retrying media upload.'
-            print strout.encode(sys.stdout.encoding, 'replace')
+            print strout.encode(default_encoding, 'replace')
           try:
             strout = '\tCREATING Item [F:%s] [T:%s] [S:%s] [K:%s]' % (
                 photo.path_component(), title, summary, photo.keywords())
-            print strout.encode(sys.stdout.encoding, 'replace')
+            print strout.encode(default_encoding, 'replace')
             pws.InsertPhotoSimple(galbum.GetFeedLink().href, title,
                 summary, filename, keywords=keywords, content_type=filetype)
             success = True
@@ -190,11 +196,11 @@ def main(argv):
           except gdata.photos.service.GooglePhotosException, e:
             if e[0] in [500, 503]:
               strout = 'Google error: gdata.photos.service.GooglePhotosException %s' % e
-              print strout.encode(sys.stdout.encoding, 'replace')
+              print strout.encode(default_encoding, 'replace')
             # Error 413: Entity too large
             elif e[0] in [413]:
               strout = 'Google error: Entity too large!'
-              print strout.encode(sys.stdout.encoding, 'replace')
+              print strout.encode(default_encoding, 'replace')
               # Continue with next photo
               success = 1
               break
@@ -202,7 +208,7 @@ def main(argv):
               raise e
           mtries -=1
           strout = 'Sleeping %.2f seconds.' % mdelay
-          print strout.encode(sys.stdout.encoding, 'replace')
+          print strout.encode(default_encoding, 'replace')
           time.sleep(mdelay)
           mdelay *= backoff
         if not success:
