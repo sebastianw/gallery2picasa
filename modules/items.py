@@ -1,5 +1,6 @@
 from modules import utils
 import os
+import datetime
 
 class Item(object):
   TABLE_NAME = 'Item'
@@ -12,19 +13,21 @@ class Item(object):
       pass
 
     self.__id = id
-    (description, keywords, summary, title) = db.FieldsForItem(
-        id, Item.TABLE_NAME, 'description', 'keywords', 'summary', 'title')
+    (description, keywords, summary, title, created) = db.FieldsForItem(
+        id, Item.TABLE_NAME, 'description', 'keywords', 'summary', 'title', 'originationTimestamp')
 
     self.__description = utils.HtmlUnescape(
         (description, '')[description is None])
     self.__keywords = utils.HtmlUnescape((keywords, '')[keywords is None])
     self.__summary = utils.HtmlUnescape((summary, '')[summary is None])
     self.__title = utils.HtmlUnescape((title, '')[title is None])
+    self.__created = created
 
   def __str__(self):
-    return "%s: title='%s' summary='%s' description='%s' keywords='%s'" % (
-      self.type(), self.__title, self.__summary,
-      self.__description, self.__keywords)
+    return "%s: title='%s' created='%s' summary='%s' description='%s' keywords='%s'" % (
+      self.type(), self.__title,
+      datetime.datetime.strftime(datetime.datetime.fromtimestamp(self.__created), '%Y-%m-%d %H:%M'),
+      self.__summary, self.__description, self.__keywords)
 
   def type(self):
     pass
@@ -44,6 +47,8 @@ class Item(object):
   def title(self):
     return self.__title
 
+  def created(self):
+    return self.__created
 
 class ChildEntity(Item):
   TABLE_NAME = 'ChildEntity'
