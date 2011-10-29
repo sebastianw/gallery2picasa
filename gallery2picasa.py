@@ -65,6 +65,10 @@ for mtype in valid_mimetypes:
 def create_google_album(pws, album, privacy, seq=0):
   summary = album.summary() or album.description()
   atitle = album.title()
+  timestamp = None
+  if album.created() > 0:
+    # Google expects creation timestamp in microseconds and as a string parameter
+    timestamp = '%s000' % album.created()
   if seq > 0:
     atitle = "%s_%s" % (atitle, seq)
   mtries, mdelay = retry, delay
@@ -75,7 +79,7 @@ def create_google_album(pws, album, privacy, seq=0):
     try:
       strout = 'CREATING ALBUM [%s] [%s]' % (atitle, summary)
       print strout.encode(default_encoding, 'replace')
-      return pws.InsertAlbum(atitle, summary, access=privacy)
+      return pws.InsertAlbum(atitle, summary, access=privacy, timestamp=timestamp)
     except gdata.photos.service.GooglePhotosException, e:
       if e[0] < 500:
         raise e
