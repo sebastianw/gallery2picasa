@@ -7,10 +7,11 @@ from modules import utils
 
 import getopt
 import sys
+import getpass
 
 FLAGS = flags.FLAGS
 FLAGS.AddFlag('u', 'username', 'The username to use for the database')
-FLAGS.AddFlag('p', 'password', 'The password to use for the database')
+FLAGS.AddFlag('p', 'password', 'The password to use for the database (interactive prompt if unspecified)', '')
 FLAGS.AddFlag('d', 'database', 'The database to use', 'gallery2')
 FLAGS.AddFlag('h', 'hostname', 'The hostname to use', 'localhost')
 FLAGS.AddFlag('t', 'table_prefix', 'The table prefix to use', 'g2_')
@@ -47,6 +48,9 @@ def main(argv):
   except flags.FlagParseError, e:
     utils.Usage(appname, e.usage(), e.message())
     sys.exit(1)
+
+  if FLAGS.password == '':
+    FLAGS.password = getpass.getpass('DB Password:')
 
   gdb = db.Database(FLAGS.username, FLAGS.password, FLAGS.database,
       FLAGS.hostname, FLAGS.table_prefix, FLAGS.field_prefix)

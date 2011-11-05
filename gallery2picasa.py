@@ -11,16 +11,17 @@ import getopt
 import sys
 import time
 import mimetypes
+import getpass
 
 FLAGS = flags.FLAGS
 FLAGS.AddFlag('b', 'dbuser', 'The username to use for the database')
-FLAGS.AddFlag('a', 'dbpass', 'The password to use for the database')
+FLAGS.AddFlag('a', 'dbpass', 'The password to use for the database (interactive prompt if unspecified)', '')
 FLAGS.AddFlag('d', 'database', 'The database to use', 'gallery2')
 FLAGS.AddFlag('h', 'hostname', 'The database hostname', 'localhost')
 FLAGS.AddFlag('t', 'table_prefix', 'The table prefix to use', 'g2_')
 FLAGS.AddFlag('f', 'field_prefix', 'The field prefix to use', 'g_')
 FLAGS.AddFlag('u', 'username', 'The Google username to use')
-FLAGS.AddFlag('p', 'password', 'The Google password to use')
+FLAGS.AddFlag('p', 'password', 'The Google password to use (interactive prompt if unspecified)', '')
 FLAGS.AddFlag('y', 'privacy', 'The access level for the album ("private" or "public")', 'public')
 FLAGS.AddFlag('o', 'confirm', 'Confirm upload for every album', 'true')
 FLAGS.AddFlag('g', 'gallery_prefix', 'Prefix for gallery photos',
@@ -100,6 +101,12 @@ def main(argv):
   except flags.FlagParseError, e:
     utils.Usage(appname, e.usage(), e.message())
     sys.exit(1)
+
+  if FLAGS.dbpass == '':
+    FLAGS.dbpass = getpass.getpass('DB Password:')
+
+  if FLAGS.password == '':
+    FLAGS.password = getpass.getpass('Google Password:')
 
   gdb = db.Database(FLAGS.dbuser, FLAGS.dbpass, FLAGS.database,
       FLAGS.hostname, FLAGS.table_prefix, FLAGS.field_prefix)
