@@ -26,6 +26,10 @@ FLAGS.AddFlag('y', 'privacy', 'The access level for the album ("private" or "pub
 FLAGS.AddFlag('o', 'confirm', 'Confirm upload for every album', 'true')
 FLAGS.AddFlag('g', 'gallery_prefix', 'Prefix for gallery photos',
     '/var/local/g2data')
+FLAGS.AddFlag('l', 'long_titles', 'Construct long album titles using parents\' titles', 'false')
+FLAGS.AddFlag('c', 'truncate_count',
+    'Truncate this many album names from long titles. To be used with -l.',
+     '0')
 
 # Error avoidance
 retry = 10            # Number of retries
@@ -63,9 +67,8 @@ for mtype in valid_mimetypes:
   if mayor == 'video':
     gdata.photos.service.SUPPORTED_UPLOAD_TYPES += (minor,)
 
-def create_google_album(pws, album, privacy, seq=0):
+def create_google_album(pws, album, atitle, privacy, seq=0):
   summary = album.summary() or album.description()
-  atitle = album.title()
   timestamp = None
   if album.created() > 0:
     # Google expects creation timestamp in microseconds and as a string parameter
@@ -92,6 +95,20 @@ def create_google_album(pws, album, privacy, seq=0):
     time.sleep(mdelay)
     mdelay *= backoff
   raise Exception('Could not create album')
+
+def album_title_with_parents(albums, leaf_album, truncate):
+  titles = [leaf_album.title()]
+  parent_id = leaf_album.parent_id()
+  while parent_id:
+    album = albums[parent_id]
+    titles.insert(0, album.title())
+    parent_id = album.parent_id()
+
+  for unused in xrange(truncate):
+    if len(titles) > 1:
+      titles.pop(0)
+  
+  return ' - '.join(titles)
 
 def main(argv):
   appname = argv[0]
@@ -121,10 +138,10 @@ def main(argv):
       confirm = False
 
   try:
-    albums = []
+    albums = {}
     album_ids = gdb.ItemIdsForTable(items.AlbumItem.TABLE_NAME)
     for id in album_ids:
-      albums.append(items.AlbumItem(gdb, id))
+      albums[id] = items.AlbumItem(gdb, id)
 
     photos_by_album = {}
     photo_ids = gdb.ItemIdsForTable(items.PhotoItem.TABLE_NAME)
@@ -143,15 +160,19 @@ def main(argv):
 
       photos_by_album[movie.parent_id()].append(movie)
 
-    for album in albums:
+    for album in albums.itervalues():
       if album.id() not in photos_by_album:
         continue
+
+      atitle = album.title()
+      if FLAGS.long_titles == 'true':
+        atitle = album_title_with_parents(albums, album, int(FLAGS.truncate_count))
 
       if confirm:
         upload_album = False
         confirmed = False
         while confirmed == False:
-          confirm_input = raw_input('Upload Album "%s"? [y/N]' % album.title().encode(default_encoding, 'replace')).lower()
+          confirm_input = raw_input('Upload Album "%s"? [y/N]' % atitle.encode(default_encoding, 'replace')).lower()
           if confirm_input == 'n' or confirm_input == '':
             confirmed = True
           elif confirm_input == 'y':
@@ -165,7 +186,7 @@ def main(argv):
       if privacy != 'public':
         privacy = 'private'
 
-      galbum = create_google_album(pws, album, privacy)
+      galbum = create_google_album(pws, album, atitle, privacy)
 
       pcount = 0
       acount = 0
@@ -182,7 +203,7 @@ def main(argv):
         if pcount > max_per_album:
           pcount = 1
           acount += 1
-          galbum = create_google_album(pws, album, privacy, acount)
+          galbum = create_google_album(pws, album, atitle, privacy, acount)
 
         # Title is displayed nowhere in picasa?
         title = photo.title() or photo.path_component()
