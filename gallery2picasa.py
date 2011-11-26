@@ -25,6 +25,7 @@ FLAGS.AddFlag('p', 'password', 'The Google password to use (interactive prompt i
 FLAGS.AddFlag('y', 'privacy', 'The access level for the album ("private" or "public")', 'public')
 FLAGS.AddFlag('o', 'confirm', 'Confirm upload for every album', 'true')
 FLAGS.AddFlag('x', 'exclude_movies', 'Exclude movies from the upload', 'false')
+FLAGS.AddFlag('n', 'dry_run', 'Do not upload, just print what would be uploaded', 'false')
 FLAGS.AddFlag('g', 'gallery_prefix', 'Prefix for gallery photos',
     '/var/local/g2data')
 FLAGS.AddFlag('l', 'long_titles', 'Construct long album titles using parents\' titles', 'false')
@@ -84,6 +85,8 @@ def create_google_album(pws, album, atitle, privacy, seq=0):
     try:
       strout = 'CREATING ALBUM [%s] [%s]' % (atitle, summary)
       print strout.encode(default_encoding, 'replace')
+      if FLAGS.dry_run == 'true':
+        return True
       return pws.InsertAlbum(atitle, summary, access=privacy, timestamp=timestamp)
     except gdata.photos.service.GooglePhotosException, e:
       if e[0] < 500:
@@ -222,7 +225,8 @@ def main(argv):
             strout = '\tCREATING Item [F:%s] [T:%s] [S:%s] [K:%s]' % (
                 photo.path_component(), title, summary, photo.keywords())
             print strout.encode(default_encoding, 'replace')
-            pws.InsertPhotoSimple(galbum.GetFeedLink().href, title,
+            if FLAGS.dry_run != 'true':
+              pws.InsertPhotoSimple(galbum.GetFeedLink().href, title,
                 summary, filename, keywords=keywords, content_type=filetype)
             success = True
             break
