@@ -24,6 +24,7 @@ FLAGS.AddFlag('u', 'username', 'The Google username to use')
 FLAGS.AddFlag('p', 'password', 'The Google password to use (interactive prompt if unspecified)', '')
 FLAGS.AddFlag('y', 'privacy', 'The access level for the album ("private" or "public")', 'public')
 FLAGS.AddFlag('o', 'confirm', 'Confirm upload for every album', 'true')
+FLAGS.AddFlag('x', 'exclude_movies', 'Exclude movies from the upload', 'false')
 FLAGS.AddFlag('g', 'gallery_prefix', 'Prefix for gallery photos',
     '/var/local/g2data')
 FLAGS.AddFlag('l', 'long_titles', 'Construct long album titles using parents\' titles', 'false')
@@ -152,13 +153,13 @@ def main(argv):
 
       photos_by_album[photo.parent_id()].append(photo)
 
-    movie_ids = gdb.ItemIdsForTable(items.MovieItem.TABLE_NAME)
-    for id in movie_ids:
-      movie = items.MovieItem(gdb, id)
-      if movie.parent_id() not in photos_by_album:
-        photos_by_album[movie.parent_id()] = []
-
-      photos_by_album[movie.parent_id()].append(movie)
+    if FLAGS.exclude_movies != 'true':
+      movie_ids = gdb.ItemIdsForTable(items.MovieItem.TABLE_NAME)
+      for id in movie_ids:
+        movie = items.MovieItem(gdb, id)
+        if movie.parent_id() not in photos_by_album:
+          photos_by_album[movie.parent_id()] = []
+        photos_by_album[movie.parent_id()].append(movie)
 
     for album in albums.itervalues():
       if album.id() not in photos_by_album:
