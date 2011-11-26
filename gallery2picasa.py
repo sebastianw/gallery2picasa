@@ -164,27 +164,43 @@ def main(argv):
           photos_by_album[movie.parent_id()] = []
         photos_by_album[movie.parent_id()].append(movie)
 
-    for album in albums.itervalues():
-      if album.id() not in photos_by_album:
-        continue
+    albums_to_upload = albums.copy()
 
-      atitle = album.title()
-      if FLAGS.long_titles == 'true':
-        atitle = album_title_with_parents(albums, album, int(FLAGS.truncate_count))
-
-      if confirm:
+    if confirm:
+      for album in albums.itervalues():
+        if album.id() not in photos_by_album:
+          continue
         upload_album = False
         confirmed = False
+        atitle = album.title()
+        if FLAGS.long_titles == 'true':
+          atitle = album_title_with_parents(albums, album, int(FLAGS.truncate_count))
         while confirmed == False:
-          confirm_input = raw_input('Upload Album "%s"? [y/N]' % atitle.encode(default_encoding, 'replace')).lower()
+          confirm_input = raw_input('Upload Album "%s"? [y/N/a]' % atitle.encode(default_encoding, 'replace')).lower()
           if confirm_input == 'n' or confirm_input == '':
             confirmed = True
           elif confirm_input == 'y':
             upload_album = True
             confirmed = True
+          elif confirm_input == 'a':
+            upload_album = True
+            confirm = False
+            confirmed = True
 
         if upload_album != True:
-          continue
+          del albums_to_upload[album.id()]
+
+        if confirm == False:
+            break
+
+    for album_id in albums_to_upload.keys():
+      if album_id not in photos_by_album:
+        del albums_to_upload[album_id]
+
+    for album in albums_to_upload.itervalues():
+      atitle = album.title()
+      if FLAGS.long_titles == 'true':
+        atitle = album_title_with_parents(albums, album, int(FLAGS.truncate_count))
 
       privacy = FLAGS.privacy.lower()
       if privacy != 'public':
