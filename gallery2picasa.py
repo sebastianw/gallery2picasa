@@ -143,9 +143,14 @@ def main(argv):
 
   try:
     albums = {}
+    albumlist = []
     album_ids = gdb.ItemIdsForTable(items.AlbumItem.TABLE_NAME)
     for id in album_ids:
       albums[id] = items.AlbumItem(gdb, id)
+    for id in album_ids:
+      albumlist += (id, album_title_with_parents(albums, albums[id], int(FLAGS.truncate_count))),
+
+    albumlist = sorted(albumlist, key=lambda album: album[1] )
 
     photos_by_album = {}
     photo_ids = gdb.ItemIdsForTable(items.PhotoItem.TABLE_NAME)
@@ -167,16 +172,13 @@ def main(argv):
     albums_to_upload = albums.copy()
 
     if confirm:
-      for album in albums.itervalues():
-        if album.id() not in photos_by_album:
+      for album in albumlist:
+        if album[0] not in photos_by_album:
           continue
         upload_album = False
         confirmed = False
-        atitle = album.title()
-        if FLAGS.long_titles == 'true':
-          atitle = album_title_with_parents(albums, album, int(FLAGS.truncate_count))
         while confirmed == False:
-          confirm_input = raw_input('Upload Album "%s"? [y/N/a]' % atitle.encode(default_encoding, 'replace')).lower()
+          confirm_input = raw_input('Upload Album "%s"? [y/N/a]' % album[1].encode(default_encoding, 'replace')).lower()
           if confirm_input == 'n' or confirm_input == '':
             confirmed = True
           elif confirm_input == 'y':
@@ -188,16 +190,15 @@ def main(argv):
             confirmed = True
 
         if upload_album != True:
-          del albums_to_upload[album.id()]
+          del albums_to_upload[album[0]]
 
         if confirm == False:
             break
 
-    for album_id in albums_to_upload.keys():
-      if album_id not in photos_by_album:
-        del albums_to_upload[album_id]
-
-    for album in albums_to_upload.itervalues():
+    for album_id,_ in albumlist:
+      if album_id not in photos_by_album or album_id not in albums_to_upload:
+        continue
+      album = albums[album_id]
       atitle = album.title()
       if FLAGS.long_titles == 'true':
         atitle = album_title_with_parents(albums, album, int(FLAGS.truncate_count))
